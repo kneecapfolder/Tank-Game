@@ -1,4 +1,4 @@
-from classes.config import *
+from game.config import *
 
 class Entity:
     def __init__(self, x, y):

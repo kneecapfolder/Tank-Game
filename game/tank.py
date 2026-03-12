@@ -1,14 +1,14 @@
 import pygame
-from classes.config import *
-from classes.entity import Entity
+from game.config import *
+from game.entity import Entity
 
 class Tank(Entity):
-    def __init__(self, x, y):
+    def __init__(self, x, y, theme):
         super().__init__(x, y)
-        self.y = y
         self.dir = 0
         self.hp = 5
         self.shot_cooldown = 2
+        self.theme = theme
 
 
     def circle_rect_collision(self, circle_center_x, circle_center_y, circle_radius, rect):
@@ -53,13 +53,13 @@ class Tank(Entity):
         turet_end.xy += (self.x, self.y)
 
         # theme = ["dark olive green", "olive drab"]
-        theme = ["royalblue4", "royalblue3"]
+        # theme = ["royalblue4", "royalblue3"]
 
         # pygame.draw.rect(surface, "dark olive green", pygame.Rect(self.x, self.y, CELL_SIZE, CELL_SIZE))
-        pygame.draw.circle(surface, theme[0], (self.x, self.y), CELL_SIZE * .5)
+        pygame.draw.circle(surface, self.theme[0], (self.x, self.y), CELL_SIZE * .5)
         # pygame.draw.rect(surface, "dark green", pygame.Rect(center[0] - 0.25 * CELL_SIZE, center[1] - 0.25 * CELL_SIZE, CELL_SIZE, CELL_SIZE/8))
         # pygame.draw.line(surface, "olive drab 4", (center[0]-.1, center[1]-.1), turet_end.xy, CELL_SIZE//6)
-        pygame.draw.circle(surface, theme[1], turet_end, CELL_SIZE * .2)
-        pygame.draw.circle(surface, theme[1], (self.x, self.y), CELL_SIZE * .4)
+        pygame.draw.circle(surface, self.theme[1], turet_end, CELL_SIZE * .2)
+        pygame.draw.circle(surface, self.theme[1], (self.x, self.y), CELL_SIZE * .4)
 
     

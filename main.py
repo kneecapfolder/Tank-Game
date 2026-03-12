@@ -1,10 +1,18 @@
 import pygame
-from classes.config import *
-from classes.tank import Tank
-from classes.bullet import Bullet
+import asyncio
+import threading
+from game.config import *
+from game.tank import Tank
+from game.bullet import Bullet
+from network.client import Client
 
 GAME_RESOLUTION = (CELL_SIZE*GRID_SIZE, CELL_SIZE*GRID_SIZE)  # Example: a small, fixed resolution
 WINDOW_RESOLUTION = (480, 480)
+
+HOST = "127.0.0.1"
+PORT = 8989
+
+client = Client(HOST, PORT)
 
 tiles = [
     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -19,6 +27,7 @@ tiles = [
     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
 ]
 
+# Init pygame
 pygame.init()
 screen = pygame.display.set_mode((500, 650))
 game_surface = pygame.Surface(GAME_RESOLUTION)
@@ -28,14 +37,26 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-player = Tank(2*CELL_SIZE, CELL_SIZE)
+# Game vars
+player = Tank(2*CELL_SIZE, CELL_SIZE, ["dark olive green", "olive drab"])
+enemy = Tank(2*CELL_SIZE, CELL_SIZE, ["royalblue4", "royalblue3"])
 bullets = []
 booms = []
 speed = 50
 turning_speed = 100
 cooldown = 0.0
 
+client.connect_to_server()
 
+async def move_enemy():
+    async for x, y, dir, shoot in client.get_enemy_data():
+        enemy.x = x
+        enemy.y = y
+        enemy.dir = dir
+        if shoot:
+            bullets.append(Bullet(enemy, 200, boom, True))
+
+threading.Thread(target=asyncio.run, args=(move_enemy(),)).start()
 
 def draw():
     screen.fill('black')
@@ -52,7 +73,10 @@ def draw():
             if tiles[y][x] == 1:
                 pygame.draw.rect(game_surface, "tan4", pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
+    # Draw players
+    enemy.draw(game_surface)
     player.draw(game_surface)
+
     scaled_surface = pygame.transform.scale(game_surface, WINDOW_RESOLUTION)
     screen.blit(scaled_surface, (10, 10))
 
@@ -87,13 +111,15 @@ while running:
             running = False
 
     # Inputs
+    shoot = False
     keys = pygame.key.get_pressed()
 
     # Shoot
     if cooldown  > 0:
         cooldown -= dt
     elif keys[pygame.K_SPACE]:
-        bullets.append(Bullet(player, 200, boom))
+        shoot = True
+        bullets.append(Bullet(player, 200, boom, False))
         cooldown = player.shot_cooldown
 
     # Movement
@@ -119,7 +145,9 @@ while running:
         player.move_by(dir_vec * speed * dt, tiles)
     
     for bullet in bullets:
-        bullet.move(dt, tiles)
+        bullet.move(dt, tiles, player)
+
+    client.send_data(player, shoot)
 
 
 
