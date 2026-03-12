@@ -1,0 +1,2 @@
+CELL_SIZE = 12
+GRID_SIZE = 10
